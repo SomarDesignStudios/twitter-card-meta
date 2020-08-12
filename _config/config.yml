@@ -7,7 +7,8 @@ Before:
 ---
 SilverStripe\CMS\Model\SiteTree:
   extensions:
-    - TwitterCardMeta
+    - ToastNZ\TwitterCardMeta\Extensions\TwitterCardMeta
+
 SilverStripe\SiteConfig\SiteConfig:
   extensions:
-    - TwitterSiteConfigExtension
+    - ToastNZ\TwitterCardMeta\Extensions\TwitterSiteConfigExtension

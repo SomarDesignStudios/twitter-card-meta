@@ -1,5 +1,7 @@
 <?php
 
+namespace ToastNZ\TwitterCardMeta\Extensions;
+
 use SilverStripe\Assets\Image;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Control\Director;
@@ -12,6 +14,7 @@ use SilverStripe\Forms\ToggleCompositeField;
 use SilverStripe\SiteConfig\SiteConfig;
 use SilverStripe\Control\Controller;
 use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Manifest\ModuleResourceLoader;
 
 /**
  * Class TwitterCardMeta
@@ -51,26 +54,51 @@ class TwitterCardMeta extends DataExtension
             $this->owner->TwitterCardType = 'summary_large_image';
         }
 
-        $fields->addFieldToTab('Root.Main', ToggleCompositeField::create('Twitter Graph', 'Twitter Card',
-            [
-                LiteralField::create('', '<h2>&nbsp;&nbsp;&nbsp;Twitter Card <img style="position:relative;top:4px;left 4px;" src="' . Director::absoluteBaseURL() . 'twitter-card-meta/images/twitter.png"></h2>'),
-                TextField::create('TwitterCreator', 'Creator Handle')
-                    ->setAttribute('placeholder', 'e.g @username')
-                    ->setRightTitle('Twitter account name for the author/creator (Will default to site handle)'),
-                OptionsetField::create('TwitterCardType', 'Twitter Card Type', [
-                    'summary_large_image' => 'summary with large image',
-                    'summary'             => 'summary',
-                ], 'summary_large_image')
-                    ->setRightTitle('Choose which type of twitter card you would like this page to share as.'),
-                TextField::create('TwitterTitle', 'Twitter Card Title')
-                    ->setAttribute('placeholder', 'e.g Description Of Page Content')
-                    ->setRightTitle('Twitter title to to display on the Twitter card'),
-                TextareaField::create('TwitterDescription', '')
-                    ->setRightTitle('Twitter card description goes here, automatically defaults to the content summary'),
-                UploadField::create('TwitterImage', 'Twitter Card Image')
-                    ->setRightTitle('Will default too the first image in the WYSIWYG editor or banner image if left blank'),
-            ]
-        ));
+        $imageUrl = ModuleResourceLoader::singleton()
+            ->resolveUrl('toastnz/twitter-card-meta:client/images/twitter.png');
+
+        $headerHtml = sprintf(
+            '<h2>&nbsp;&nbsp;&nbsp;Twitter Card <img style="position:relative;top:8px;" src="%s"></h2>',
+            $imageUrl
+        );
+
+        $fields->addFieldToTab(
+            'Root.Main',
+            ToggleCompositeField::create(
+                'Twitter Graph',
+                'Twitter Card',
+                [
+                    LiteralField::create('', $headerHtml),
+                    TextField::create('TwitterCreator', 'Creator Handle')
+                        ->setAttribute('placeholder', 'e.g @username')
+                        ->setRightTitle(
+                            'Twitter account name for the author/creator (Will default to site handle)'
+                        ),
+                    OptionsetField::create(
+                        'TwitterCardType',
+                        'Twitter Card Type',
+                        [
+                            'summary_large_image' => 'summary with large image',
+                            'summary'             => 'summary',
+                        ],
+                        'summary_large_image'
+                    )->setRightTitle(
+                        'Choose which type of twitter card you would like this page to share as.'
+                    ),
+                    TextField::create('TwitterTitle', 'Twitter Card Title')
+                        ->setAttribute('placeholder', 'e.g Description Of Page Content')
+                        ->setRightTitle('Twitter title to to display on the Twitter card'),
+                    TextareaField::create('TwitterDescription', '')
+                        ->setRightTitle(
+                            'Twitter card description goes here, automatically defaults to the content summary'
+                        ),
+                    UploadField::create('TwitterImage', 'Twitter Card Image')
+                        ->setRightTitle(
+                            'Will default too the first image in the WYSIWYG editor or banner image if left blank'
+                        ),
+                ]
+            )
+        );
     }
 
     /**
@@ -94,7 +122,9 @@ class TwitterCardMeta extends DataExtension
             return $this->owner->TwitterImage()->Fit(560, 750)->AbsoluteURL;
         } elseif ($firstImage = $this->getFirstImage()) {
             return Controller::join_links(Director::absoluteBaseURL(), $firstImage);
-        } elseif (SiteConfig::current_site_config()->DefaultTwitterImage() && SiteConfig::current_site_config()->DefaultTwitterImage()->exists()) {
+        } elseif (SiteConfig::current_site_config()->DefaultTwitterImage() &&
+            SiteConfig::current_site_config()->DefaultTwitterImage()->exists()
+        ) {
             return SiteConfig::current_site_config()->DefaultTwitterImage()->Fit(560, 750)->AbsoluteURL;
         }
 
@@ -108,8 +138,10 @@ class TwitterCardMeta extends DataExtension
     {
         $pattern = ' /<img[^>]+ src[\\s = \'"]';
         $pattern .= '+([^"\'>\\s]+)/is';
+
         if (preg_match($pattern, $this->owner->Content, $match) !== false && !empty($match)) {
             $imageLink = preg_replace('/_resampled\/resizedimage[0-9]*-/', '', $match[1]);
+
             return (string)$imageLink;
         } else {
             return '';
@@ -154,9 +186,15 @@ class TwitterCardMeta extends DataExtension
 
         // Description
         if ($this->owner->TwitterDescription) {
-            $tags .= sprintf('<meta name="twitter:description" content="%s">', $this->owner->TwitterDescription) . "\n";
+            $tags .= sprintf(
+                '<meta name="twitter:description" content="%s">',
+                $this->owner->TwitterDescription
+            ) . "\n";
         } else {
-            $tags .= sprintf('<meta name="twitter:description" content="%s">', $this->owner->dbObject('Content')->FirstParagraph()) . "\n";
+            $tags .= sprintf(
+                '<meta name="twitter:description" content="%s">',
+                $this->owner->dbObject('Content')->FirstParagraph()
+            ) . "\n";
         }
 
         // Image
@@ -166,5 +204,4 @@ class TwitterCardMeta extends DataExtension
 
         $tags .= sprintf('<meta name="twitter:image" content="%s">', $image) . "\n";
     }
-
 }

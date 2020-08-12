@@ -1,5 +1,7 @@
 <?php
 
+namespace ToastNZ\TwitterCardMeta\Extensions;
+
 use SilverStripe\Assets\Image;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\TabSet;
@@ -54,5 +56,4 @@ class TwitterSiteConfigExtension extends DataExtension
         ]);
 
     }
-
 }
